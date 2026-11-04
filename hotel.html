@@ -1,0 +1,14 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>North – Hotel Owner</title><link rel="stylesheet" href="css/style.css"></head><body>
+<main class="wrap"><h2>🏨 Hotel Owner Dashboard – Mountain View Inn, Chilas</h2><div class="grid g3" id="stats"></div>
+<div class="grid g2" style="margin-top:16px"><div class="card"><h3>My listing</h3><label>Rooms available</label><input id="rm" type="number" min="0"><label>Emergency rate (Rs / night)</label><input id="rt" type="number" min="0"><label><input type="checkbox" id="ag" style="width:auto"> I agree to participate in emergency rates</label><button class="btn" id="sv">Save changes</button></div>
+<div class="card"><h3>All participating hotels</h3><table id="ht"></table></div></div>
+<div class="card" style="margin-top:16px"><h3>Complaint channel</h3><div id="cp"></div></div></main>
+<script src="js/data.js"></script><script src="js/common.js"></script><script>
+nav("hotel.html");const me=()=>S.hotels.find(h=>h.id==1);
+function render(){const h=me();$("#stats").innerHTML=[["Rooms free",h.rooms],["Emergency rate","Rs "+h.rate],["Agreement",h.agreed?"✔ Agreed":"✖ Not agreed"]].map(x=>`<div class="card"><div class="stat">${x[1]}</div>${x[0]}</div>`).join("");
+ $("#rm").value=h.rooms;$("#rt").value=h.rate;$("#ag").checked=h.agreed;
+ $("#ht").innerHTML="<tr><th>Hotel</th><th>Rate</th><th>Rooms</th></tr>"+S.hotels.map(x=>`<tr><td>${x.name}</td><td>${x.agreed?"Rs "+x.rate:"—"}</td><td>${x.rooms||"Full"}</td></tr>`).join("");
+ $("#cp").innerHTML=S.complaints.map(c=>`<div class="banner">${c.text} · <b>${c.st}</b></div>`).join("")}
+$("#sv").onclick=()=>{const h=me();h.rooms=+$("#rm").value;h.rate=+$("#rt").value;h.agreed=$("#ag").checked;save();render();toast("Listing updated – visible to tourists")};
+render();window.addEventListener("storage",()=>{S=Store.get();render()});
+</script></body></html>

@@ -1,0 +1,31 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>The North Tourism</title><link rel="stylesheet" href="css/style.css"></head><body>
+<main class="wrap"><div id="ban"></div><div class="grid g2"><div><div class="card"><h2>Hazard Map</h2><div id="lg"></div><label><input type="checkbox" id="alt" style="width:auto"> Show alternate route (Besham → Chilas)</label><div class="map" id="map"></div></div></div>
+<div class="grid" style="align-content:start"><div class="card" id="det"><p class="muted">Tap a road segment on the map for cause, source, timestamp and alternate route.</p></div>
+<div class="card"><button class="btn" id="sv">⭐ Save this route for alerts</button><p class="muted" id="svl"></p></div></div></div>
+<div class="card" style="margin-top:16px" id="tb"><div class="tabs"><button>🤖 AI Assistant</button><button>🏨 Stays</button><button>📝 Report</button><button>🆘 SOS Tracker</button></div>
+<div class="pane"><div class="chat" id="chat"><div class="m b">Salaam! Ask about Raikot, Hunza, Skardu, Babusar, weather, hotels or trip plan. I answer only from verified North data.</div></div><input id="q" placeholder="Type a question..."><button class="btn" id="ask">Send</button></div>
+<div class="pane"><table id="ht"></table><p class="muted">Emergency rates apply only to participating hotels; North does not enforce prices.</p></div>
+<div class="pane"><select id="rs"></select><textarea id="rt" rows="3" placeholder="What did you see? (will show as Unverified until admin review)"></textarea><button class="btn" id="rb">Submit report</button></div>
+<div class="pane" id="st"></div></div></main>
+<button class="btn red sos" id="sosb">🆘 SOS</button><a class="btn ghost" style="position:fixed;bottom:16px;left:16px;z-index:60" href="tel:1122">📞 Call Rescue 1122</a>
+<div class="modal" id="md"><div class="card"><h2>Send SOS</h2><label>Type of need</label><select id="nd"><option>Stranded</option><option>Medical</option><option>Shelter</option></select><label>Group size</label><input id="gs" type="number" value="2" min="1"><p class="muted">📍 Location: Chilas (simulated GPS, shared only on SOS)</p><button class="btn red" id="go">Send now</button> <button class="btn ghost" id="cn">Cancel</button><p class="muted">No signal? <a href="sms:1122?body=SOS Stranded Chilas 2 people" style="text-decoration:underline">Open pre-filled SMS</a></p></div></div>
+<script src="js/data.js"></script><script src="js/common.js"></script><script>
+nav("tourist.html");let sel=3;const STP=["Sent","Assigned","En route","Resolved"];
+function ban(){const a=S.alerts.slice(-1)[0];$("#ban").innerHTML=a?'<div class="banner">🔔 Journey alert: '+a+'</div>':""}
+function draw(){drawMap($("#map"),{sel,alt:$("#alt").checked,pick:i=>{sel=i;draw()}});$("#det").innerHTML=segCard(S.segs.find(s=>s.id==sel));$("#svl").textContent="Saved routes: "+(S.saved.map(i=>S.segs.find(s=>s.id==i).name).join(" | ")||"none");ban()}
+$("#lg").innerHTML=legend();$("#alt").onchange=draw;
+$("#sv").onclick=()=>{if(!S.saved.includes(sel))S.saved.push(sel);save();toast("Route saved – you'll be alerted on status change");draw()};
+$("#rs").innerHTML=S.segs.map(s=>'<option value="'+s.id+'">'+s.name+'</option>').join("");
+$("#rb").onclick=()=>{const t=$("#rt").value.trim();if(!t)return toast("Please describe the issue");S.reports.push({id:Date.now(),by:"Tourist (you)",seg:+$("#rs").value,text:t,cls:"Open · Pending classification",cred:50,status:"pending"});save();$("#rt").value="";toast("Report sent – Unverified until admin review")};
+function hotels(){$("#ht").innerHTML="<tr><th>Hotel</th><th>Emergency rate</th><th>Rooms</th><th>Status</th></tr>"+S.hotels.map(h=>"<tr><td>"+h.name+"</td><td>"+(h.agreed?"Rs "+h.rate:"—")+"</td><td>"+(h.rooms?h.rooms+" free":"Full")+"</td><td>"+(h.agreed?"✔ Agreed":"Not participating")+"</td></tr>").join("")}
+function say(t,c){const d=document.createElement("div");d.className="m "+c;d.textContent=t;$("#chat").append(d);$("#chat").scrollTop=1e5}
+$("#ask").onclick=()=>{const q=$("#q").value.trim().toLowerCase();if(!q)return;say($("#q").value,"u");$("#q").value="";
+ setTimeout(()=>{if(/help|sos|accident|medical|emergency|stuck/.test(q))return say("Emergency detected – please use the SOS button or call Rescue 1122.","b");
+ const k=Object.keys(KB).find(k=>q.includes(k));say(k?KB[k]:"No recent verified update for that.","b")},600)};
+$("#q").onkeydown=e=>e.key=="Enter"&&$("#ask").click();
+$("#sosb").onclick=()=>$("#md").classList.add("on");$("#cn").onclick=()=>$("#md").classList.remove("on");
+$("#go").onclick=()=>{S.sos.push({id:Date.now(),by:"You ("+$("#gs").value+" people)",need:$("#nd").value,loc:"Chilas (simulated)",step:0,vol:"—",mine:1});save();$("#md").classList.remove("on");toast("SOS sent to admin & nearby volunteers");tabs($("#tb"));$[3].click();track()};
+function track(){const m=S.sos.filter(s=>s.mine).slice(-1)[0];$("#st").innerHTML=m?"<h3>Your SOS: "+m.need+"</h3><div class='steps'>"+STP.map((x,i)=>"<span class='"+(i<=m.step?"d":"")+"'>"+x+"</span>").join("")+"</div><p>Volunteer: "+m.vol+"</p><p class='muted'>Status updates live when Admin/Volunteer act (open them in another tab).</p>":"<p class='muted'>No active SOS.</p>"}
+tabs($("#tb"));hotels();draw();track();
+window.addEventListener("storage",()=>{S=Store.get();draw();hotels();track()});
+</script></body></html>

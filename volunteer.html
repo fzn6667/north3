@@ -1,0 +1,12 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>The North Tourism</title><link rel="stylesheet" href="css/style.css"></head><body>
+<main class="wrap"><h2>🙋 Volunteer Portal – Sana Baig (Chilas)</h2><div class="grid g2"><div class="card"><h3>Post on-ground update</h3><select id="rs"></select><select id="ty"><option>Open / passable</option><option>Blocked</option><option>Caution</option></select><textarea id="rt" rows="3" placeholder="Describe conditions"></textarea><button class="btn" id="rb">Send to admin for verification</button></div>
+<div class="card"><h3>SOS near you</h3><div id="sl"></div></div></div>
+<div class="card" style="margin-top:16px"><h3>💬 Volunteer chat (Chilas hotspot)</h3><div class="chat" id="chat"><div class="m b">Ali: Rocks cleared at Dasu, one lane open.</div><div class="m b">Admin: Please confirm Raikot status.</div></div><input id="q" placeholder="Message..."><button class="btn" id="ask">Send</button></div></main>
+<script src="js/data.js"></script><script src="js/common.js"></script><script>
+nav("volunteer.html");$("#rs").innerHTML=S.segs.map(s=>'<option value="'+s.id+'">'+s.name+'</option>').join("");
+$("#rb").onclick=()=>{const t=$("#rt").value.trim();if(!t)return toast("Add a description");S.reports.push({id:Date.now(),by:"Volunteer Sana",seg:+$("#rs").value,text:$("#ty").value+" – "+t,cls:$("#ty").value,cred:90,status:"pending"});save();$("#rt").value="";toast("Sent for admin review")};
+function sos(){$("#sl").innerHTML=S.sos.filter(s=>s.step<3).map(s=>'<div class="banner"><b>'+s.need+'</b> – '+s.by+'<br>📍 '+s.loc+'<br><button class="btn sm" data-i="'+s.id+'">'+(s.step==0?"Accept":s.step==1?"I\'m en route":"Mark resolved")+'</button></div>').join("")||"<p class='muted'>No open SOS.</p>";
+ $$("#sl button").forEach(b=>b.onclick=()=>{const c=S.sos.find(x=>x.id==b.dataset.i);c.step++;c.vol="Sana Baig";save();sos();toast("SOS status: "+["Sent","Assigned","En route","Resolved"][c.step])})}
+$("#ask").onclick=()=>{const v=$("#q").value.trim();if(!v)return;const d=document.createElement("div");d.className="m u";d.textContent=v;$("#chat").append(d);$("#q").value=""};
+sos();window.addEventListener("storage",()=>{S=Store.get();sos()});
+</script></body></html>

@@ -1,0 +1,21 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>North – Admin</title><link rel="stylesheet" href="css/style.css"></head><body>
+<main class="wrap"><h2>🛡️ Admin Dashboard</h2><div class="grid g3" id="stats"></div>
+<div class="grid g2" style="margin-top:16px"><div class="card"><h3>Live hazard map (click a segment to set status)</h3><div id="lg"></div><div class="map" id="map"></div><div id="ed"></div></div>
+<div class="grid" style="align-content:start"><div class="card"><h3>Report review queue</h3><div id="rq"></div></div><div class="card"><h3>SOS cases</h3><div id="sl"></div></div></div></div>
+<div class="card" style="margin-top:16px"><h3>Volunteers</h3><table id="vt"></table></div></main>
+<script src="js/data.js"></script><script src="js/common.js"></script><script>
+nav("admin.html");let sel=3;const STP=["Sent","Assigned","En route","Resolved"];
+function guess(t){return /block|landslide|closed|band/i.test(t)?"red":/caution|snow|rock|stone|slow/i.test(t)?"yellow":"green"}
+function render(){
+ $("#stats").innerHTML=[["Pending reports",S.reports.filter(r=>r.status=="pending").length],["Open SOS",S.sos.filter(s=>s.step<3).length],["Red segments",S.segs.filter(s=>eff(s)=="red").length],["Grey / unknown",S.segs.filter(s=>eff(s)=="grey").length]].map(x=>`<div class="card"><div class="stat">${x[1]}</div>${x[0]}</div>`).join("");
+ $("#lg").innerHTML=legend();drawMap($("#map"),{sel,pick:i=>{sel=i;render()}});
+ const g=S.segs.find(s=>s.id==sel);$("#ed").innerHTML=segCard(g)+["green","yellow","red","grey"].map(c=>`<button class="btn sm ${c=="red"?"red":"ghost"}" data-c="${c}">${ICON[c]} ${c}</button>`).join(" ");
+ $$("#ed button").forEach(b=>b.onclick=()=>{g.st=b.dataset.c;g.upd=new Date().toISOString();g.src="Admin (manual)";notify(g);save();render();toast("Status updated")});
+ $("#rq").innerHTML=S.reports.filter(r=>r.status=="pending").map(r=>`<div class="banner"><b>${r.by}</b> · ${S.segs.find(s=>s.id==r.seg).name}<br>${r.text}<br><span class="muted">AI: ${r.cls} · credibility ${r.cred}%</span><br><button class="btn sm" data-a="ok" data-i="${r.id}">✔ Verify &amp; publish</button> <button class="btn sm red" data-a="no" data-i="${r.id}">✖ Reject</button></div>`).join("")||"<p class='muted'>Queue is empty 🎉</p>";
+ $$("#rq button").forEach(b=>b.onclick=()=>{const r=S.reports.find(x=>x.id==b.dataset.i);if(b.dataset.a=="ok"){const g=S.segs.find(s=>s.id==r.seg);g.st=guess(r.text);g.cause=r.text;g.src=r.by+" + Admin verified";g.upd=new Date().toISOString();r.status="verified";notify(g)}else r.status="rejected";save();render();toast(b.dataset.a=="ok"?"Verified – map updated, travellers alerted":"Report rejected")});
+ $("#sl").innerHTML=S.sos.filter(s=>s.step<3).map(s=>`<div class="banner"><b>${s.need}</b> – ${s.by}<br>📍 ${s.loc} · Status: ${STP[s.step]}<br><button class="btn sm" data-i="${s.id}">${s.step==0?"Assign nearest volunteer":s.step==1?"Mark en route":"Resolve"}</button></div>`).join("")||"<p class='muted'>No open cases.</p>";
+ $$("#sl button").forEach(b=>b.onclick=()=>{const c=S.sos.find(x=>x.id==b.dataset.i);c.step++;if(c.step==1)c.vol="Sana Baig (Chilas)";save();render();toast("SOS → "+STP[c.step])});
+ $("#vt").innerHTML="<tr><th>Name</th><th>Hotspot</th><th>Status</th></tr>"+S.vols.map(v=>`<tr><td>${v.n}</td><td>${v.at}</td><td>${v.on?"🟢 Online":"⚪ Offline"}</td></tr>`).join("")}
+function notify(g){if(S.saved.includes(g.id))S.alerts.push(g.name+" is now "+LBL[g.st]+" ("+g.cause+")")}
+render();window.addEventListener("storage",()=>{S=Store.get();render()});
+</script></body></html>
